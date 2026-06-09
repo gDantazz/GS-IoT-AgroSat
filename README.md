@@ -163,7 +163,7 @@ AgroSat-IoT/
    PORT=3000
 
    # Conexão Oracle Database
-   DB_USER=rm560585
+   DB_USER=rm561055
    DB_PASSWORD=sua_senha_do_banco_aqui
    DB_HOST=oracle.fiap.com.br
    DB_PORT=1521
