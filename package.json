@@ -1,0 +1,29 @@
+{
+  "name": "agrosat-iot",
+  "version": "1.0.0",
+  "description": "AgroSat — Monitoramento Agrícola com Dados de Satélite e IA Generativa",
+  "type": "module",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "check": "node --check server/index.js && node --check server/routes/ai.js && node --check server/routes/nasa.js && node --check server/routes/iot.js && node --check server/services/geminiService.js && node --check server/services/nasaService.js && node --check server/services/dbService.js"
+  },
+  "dependencies": {
+    "@google/genai": "^1.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.0",
+    "oracledb": "^6.5.0"
+  },
+  "keywords": [
+    "agriculture",
+    "satellite",
+    "ndvi",
+    "nasa",
+    "gemini",
+    "ai",
+    "ods2"
+  ],
+  "license": "MIT"
+}

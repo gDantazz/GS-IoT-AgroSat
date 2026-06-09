@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+    content="AgroSat — Monitoramento agrícola inteligente com dados de satélite da NASA e IA Generativa. Acompanhe NDVI, clima e alertas de desastres.">
+  <title>AgroSat — Monitoramento Agrícola com Satélite e IA</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="shortcut icon" href="/favicon.svg">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <!-- App CSS -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+  <!-- Header -->
+  <header class="header" id="header">
+    <div class="header__left">
+      <div class="header__logo">
+        <div class="header__logo-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Z" opacity="0.2" />
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+            <path d="M2 12h20" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="header__title">AgroSat</h1>
+          <p class="header__subtitle">Monitoramento por Satélite + IA</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="header__center">
+      <div class="header__search" id="locationSearch">
+        <svg class="header__search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+          <circle cx="12" cy="10" r="3" />
+        </svg>
+        <input type="text" class="header__search-input" id="locationInput"
+          placeholder="Latitude, Longitude (ex: -23.55, -46.63)">
+        <button class="header__search-btn" id="searchBtn" title="Buscar localização">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.3-4.3" />
+          </svg>
+        </button>
+      </div>
+      <button class="header__geo-btn" id="geoBtn" title="Usar minha localização">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0-6 0" />
+          <path d="M12 2v4m0 12v4M2 12h4m12 0h4" />
+        </svg>
+        Minha Localização
+      </button>
+    </div>
+
+    <div class="header__right">
+      <div class="header__location-display" id="locationDisplay">
+        <span class="header__location-label">Localização:</span>
+        <span class="header__location-value" id="locationValue">Selecione no mapa</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main" id="main">
+    <!-- Stats Cards Row -->
+    <section class="stats" id="statsSection">
+      <div class="stat-card stat-card--temp" id="cardTemp">
+        <div class="stat-card__icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0Z" />
+          </svg>
+        </div>
+        <div class="stat-card__content">
+          <span class="stat-card__label">Temperatura Média</span>
+          <span class="stat-card__value" id="tempValue">--°C</span>
+          <span class="stat-card__detail" id="tempDetail">Máx: -- | Mín: --</span>
+        </div>
+      </div>
+
+      <div class="stat-card stat-card--rain" id="cardRain">
+        <div class="stat-card__icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" />
+            <path d="M16 14v6" />
+            <path d="M8 14v6" />
+            <path d="M12 16v6" />
+          </svg>
+        </div>
+        <div class="stat-card__content">
+          <span class="stat-card__label">Precipitação Total</span>
+          <span class="stat-card__value" id="rainValue">-- mm</span>
+          <span class="stat-card__detail" id="rainDetail">-- dias com chuva</span>
+        </div>
+      </div>
+
+      <div class="stat-card stat-card--humidity" id="cardHumidity">
+        <div class="stat-card__icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path
+              d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z" />
+          </svg>
+        </div>
+        <div class="stat-card__content">
+          <span class="stat-card__label">Umidade Relativa</span>
+          <span class="stat-card__value" id="humidityValue">--%</span>
+          <span class="stat-card__detail" id="humidityDetail">Média do período</span>
+        </div>
+      </div>
+
+      <div class="stat-card stat-card--solar" id="cardSolar">
+        <div class="stat-card__icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 2v2" />
+            <path d="M12 20v2" />
+            <path d="m4.93 4.93 1.41 1.41" />
+            <path d="m17.66 17.66 1.41 1.41" />
+            <path d="M2 12h2" />
+            <path d="M20 12h2" />
+            <path d="m6.34 17.66-1.41 1.41" />
+            <path d="m19.07 4.93-1.41 1.41" />
+          </svg>
+        </div>
+        <div class="stat-card__content">
+          <span class="stat-card__label">Radiação Solar</span>
+          <span class="stat-card__value" id="solarValue">-- MJ/m²</span>
+          <span class="stat-card__detail" id="solarDetail">Média diária</span>
+        </div>
+      </div>
+
+      <div class="stat-card stat-card--ndvi" id="cardNdvi">
+        <div class="stat-card__icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M7 20h10" />
+            <path d="M10 20c5.5-2.5.8-6.4 3-10" />
+            <path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z" />
+            <path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z" />
+          </svg>
+        </div>
+        <div class="stat-card__content">
+          <span class="stat-card__label">NDVI (Vegetação)</span>
+          <span class="stat-card__value" id="ndviValue">--</span>
+          <span class="stat-card__detail" id="ndviDetail">Índice de vegetação</span>
+        </div>
+        <div class="stat-card__ndvi-bar" id="ndviBar">
+          <div class="stat-card__ndvi-fill" id="ndviFill"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Grid -->
+    <section class="grid">
+      <!-- Map -->
+      <div class="card card--map" id="mapCard">
+        <div class="card__header">
+          <h2 class="card__title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
+              <line x1="9" y1="3" x2="9" y2="18" />
+              <line x1="15" y1="6" x2="15" y2="21" />
+            </svg>
+            Mapa de Monitoramento
+          </h2>
+          <span class="card__badge" id="eventsBadge">0 alertas</span>
+        </div>
+        <div class="card__body card__body--map">
+          <div id="map"></div>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="card card--charts" id="chartsCard">
+        <div class="card__header">
+          <h2 class="card__title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="20" x2="18" y2="10" />
+              <line x1="12" y1="20" x2="12" y2="4" />
+              <line x1="6" y1="20" x2="6" y2="14" />
+            </svg>
+            Tendências Climáticas
+          </h2>
+          <div class="card__tabs">
+            <button class="card__tab card__tab--active" data-chart="temperature" id="tabTemp">Temperatura</button>
+            <button class="card__tab" data-chart="precipitation" id="tabPrecip">Precipitação</button>
+          </div>
+        </div>
+        <div class="card__body card__body--chart">
+          <canvas id="climateChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Alerts -->
+      <div class="card card--alerts" id="alertsCard">
+        <div class="card__header">
+          <h2 class="card__title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+              <line x1="12" y1="9" x2="12" y2="13" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+            Alertas de Desastres
+          </h2>
+        </div>
+        <div class="card__body card__body--alerts" id="alertsList">
+          <div class="alerts__loading">
+            <div class="spinner"></div>
+            <p>Carregando alertas...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- IoT Sensors Simulator -->
+      <div class="card card--iot" id="iotCard">
+        <div class="card__header">
+          <h2 class="card__title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+              <path d="M12 8v8M9 11l3-3 3 3" />
+            </svg>
+            Sensores de Solo IoT (Simulador)
+          </h2>
+          <span class="card__badge-active" id="iotStatus">Online</span>
+        </div>
+        <div class="card__body card__body--iot">
+          <form id="iotForm" class="iot-form">
+            <div class="iot-form__field">
+              <div class="iot-form__label-row">
+                <label for="soilHumidity">Umidade do Solo:</label>
+                <span class="iot-form__value"><span id="soilHumidityVal">50</span>%</span>
+              </div>
+              <input type="range" id="soilHumidity" name="soilHumidity" min="0" max="100" value="50"
+                class="iot-form__slider">
+            </div>
+            <div class="iot-form__field">
+              <div class="iot-form__label-row">
+                <label for="airTemp">Temperatura do Ar:</label>
+                <span class="iot-form__value"><span id="airTempVal">25</span>°C</span>
+              </div>
+              <input type="range" id="airTemp" name="airTemp" min="-10" max="50" value="25" class="iot-form__slider">
+            </div>
+            <div class="iot-form__field">
+              <div class="iot-form__label-row">
+                <label for="soilPh">pH do Solo:</label>
+                <span class="iot-form__value"><span id="soilPhVal">6.5</span></span>
+              </div>
+              <input type="range" id="soilPh" name="soilPh" min="0" max="14" step="0.1" value="6.5"
+                class="iot-form__slider">
+            </div>
+            <button type="submit" class="iot-form__btn" id="iotSubmitBtn">Enviar Telemetria IoT</button>
+          </form>
+          <div class="iot-feedback" id="iotFeedback" style="display: none;"></div>
+        </div>
+      </div>
+
+      <!-- Search History / Monitoring History -->
+      <div class="card card--history" id="historyCard">
+        <div class="card__header">
+          <h2 class="card__title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+            Histórico de Pesquisas (OracleDB)
+          </h2>
+          <button class="history__refresh-btn" id="historyRefreshBtn" title="Atualizar histórico">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+            </svg>
+          </button>
+        </div>
+        <div class="card__body card__body--history" id="historyList">
+          <div class="history__loading">
+            <div class="spinner"></div>
+            <p>Carregando histórico do banco...</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- AI Chat -->
+  <div class="chat" id="chat">
+    <!-- Chat Toggle Button -->
+    <button class="chat__toggle" id="chatToggle" title="Assistente IA AgroSat">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 8V4H8" />
+        <rect width="16" height="12" x="4" y="8" rx="2" />
+        <path d="M2 14h2" />
+        <path d="M20 14h2" />
+        <path d="M15 13v2" />
+        <path d="M9 13v2" />
+      </svg>
+      <span class="chat__toggle-badge" id="chatBadge" style="display:none">1</span>
+    </button>
+
+    <!-- Chat Panel -->
+    <div class="chat__panel" id="chatPanel">
+      <div class="chat__header">
+        <div class="chat__header-info">
+          <div class="chat__avatar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 8V4H8" />
+              <rect width="16" height="12" x="4" y="8" rx="2" />
+              <path d="M2 14h2" />
+              <path d="M20 14h2" />
+              <path d="M15 13v2" />
+              <path d="M9 13v2" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="chat__header-title">AgroSat AI</h3>
+            <span class="chat__header-status">Assistente Agrícola Inteligente</span>
+          </div>
+        </div>
+        <button class="chat__close" id="chatClose" title="Fechar chat">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 6 6 18" />
+            <path d="m6 6 12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="chat__messages" id="chatMessages">
+        <!-- Messages rendered by JS -->
+      </div>
+
+      <div class="chat__suggestions" id="chatSuggestions">
+        <button class="chat__suggestion" data-msg="Como está a situação da minha lavoura?">🌾 Análise da
+          lavoura</button>
+        <button class="chat__suggestion" data-msg="Existe risco de seca nos próximos dias?">🏜️ Risco de seca</button>
+        <button class="chat__suggestion" data-msg="Quando devo irrigar minha plantação?">💧 Quando irrigar</button>
+        <button class="chat__suggestion" data-msg="Quais culturas são ideais para esta região e clima?">🌱 Culturas
+          ideais</button>
+      </div>
+
+      <div class="chat__input-area">
+        <input type="text" class="chat__input" id="chatInput" placeholder="Pergunte sobre sua lavoura...">
+        <button class="chat__send" id="chatSend" title="Enviar mensagem">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="m22 2-7 20-4-9-9-4Z" />
+            <path d="M22 2 11 13" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-overlay__content">
+      <div class="loading-overlay__satellite">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Z" opacity="0.15" fill="currentColor" />
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+          <path d="M2 12h20" />
+        </svg>
+      </div>
+      <p class="loading-overlay__text">Conectando com satélites da NASA...</p>
+      <div class="loading-overlay__bar">
+        <div class="loading-overlay__progress"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/chat.js"></script>
+  <script src="js/iot.js"></script>
+  <script src="js/app.js"></script>
+</body>
+
+</html>
