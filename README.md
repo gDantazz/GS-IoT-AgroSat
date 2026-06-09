@@ -271,7 +271,7 @@ Para cumprir o requisito de **Cloud Computing**, você pode fazer o deploy gratu
    - **Start Command:** `npm start`
 5. Vá na aba **Environment** (Variáveis de Ambiente) e configure as variáveis que estão no arquivo `.env`:
    - `GEMINI_API_KEY`: Sua chave de acesso do Gemini.
-   - `DB_USER`: `rm560585`
+   - `DB_USER`: `rm561055`
    - `DB_PASSWORD`: Sua senha do banco da FIAP.
    - `DB_HOST`: `oracle.fiap.com.br`
    - `DB_PORT`: `1521`
